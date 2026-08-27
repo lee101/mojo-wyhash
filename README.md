@@ -52,6 +52,20 @@ It prints `4015771456737340991`. The wrapper builds `dist/libmojo-wyhash.so`
 on first use if it is missing or stale. Set
 `MOJO_WYHASH_LIB` to point at an already-built shared library instead.
 
+## Mojo package (pixi-build)
+
+`src/wyhash/` is a Mojo package built by `pixi-build-mojo` into
+`$PREFIX/lib/mojo/wyhash.mojopkg`. Publish with:
+
+```bash
+pixi publish --target-channel ./mojo-channel
+# or a prefix.dev / R2 channel
+```
+
+Consumers can add channel `https://twohelixesstatic.twohelixes.com/mojo-channel`
+(or a prefix.dev channel) and `pixi add mojo-wyhash`. The Python ctypes path is
+unchanged and still uses `src/capi.mojo` → `dist/libmojo-wyhash.so`.
+
 ## Benchmarks
 
 Measured with `pixi run bench` on Linux 6.8.0-136-generic, x86_64, glibc 2.39.
@@ -70,11 +84,12 @@ contains no GPU implementation.
 
 ## How it works
 
-The implementation is one Mojo compilation unit. It reads unaligned input as
-little-endian 32- and 64-bit words, preserves wyhash's 48-byte three-lane long
-message loop, and implements the required 64-by-64-to-128-bit MUM mix using
-Mojo's native 128-bit product. `make_secret` uses the reference allowed-byte table,
-`wyrand` sequence, odd-word rule, and Hamming-distance check.
+The Mojo API lives in `src/wyhash/`. `src/capi.mojo` re-exports the C ABI used by
+the Python wrapper. It reads unaligned input as little-endian 32- and 64-bit
+words, preserves wyhash's 48-byte three-lane long message loop, and implements
+the required 64-by-64-to-128-bit MUM mix using Mojo's native 128-bit product.
+`make_secret` uses the reference allowed-byte table, `wyrand` sequence, odd-word
+rule, and Hamming-distance check.
 
 Python passes input and secret buffers to the C ABI as integer addresses; Mojo
 rebuilds typed pointers inside the export because exported Mojo functions cannot

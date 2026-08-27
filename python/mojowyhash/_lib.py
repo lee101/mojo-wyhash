@@ -19,8 +19,13 @@ class BuildError(RuntimeError):
 
 def build(force: bool = False) -> str:
     """Build the shared library if it is missing or stale."""
-    source = os.path.join(ROOT, "src", "wyhash.mojo")
-    if not force and os.path.exists(LIB) and os.path.getmtime(LIB) >= os.path.getmtime(source):
+    sources = (
+        os.path.join(ROOT, "src", "capi.mojo"),
+        os.path.join(ROOT, "src", "wyhash", "__init__.mojo"),
+    )
+    if not force and os.path.exists(LIB) and all(
+        os.path.getmtime(LIB) >= os.path.getmtime(source) for source in sources
+    ):
         return LIB
     if os.environ.get("MOJO_WYHASH_LIB"):
         raise BuildError(f"MOJO_WYHASH_LIB does not point to a usable library: {LIB}")

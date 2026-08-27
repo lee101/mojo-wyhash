@@ -165,29 +165,12 @@ def secret_candidate(seed: UInt64) -> UInt64:
     return candidate
 
 
-@export("mwh_hash")
-def mwh_hash(data_addr: Int, n: Int, seed: UInt64, secret_addr: Int) abi("C") -> UInt64:
-    # The public Python wrapper validates both buffers before this raw-pointer ABI.
-    # Keep direct C callers from constructing a non-null Mojo pointer from a null
-    # address or from turning a negative length into an out-of-bounds read.
-    if n < 0 or data_addr == 0 or secret_addr == 0:
-        return 0
-    return wyhash_final3(
-        U8Ptr(unsafe_from_address=data_addr), n, seed,
-        U8Ptr(unsafe_from_address=secret_addr),
-    )
-
-
-@export("mwh_make_secret")
-def mwh_make_secret(seed_in: UInt64, dst_addr: Int) abi("C"):
-    if dst_addr == 0:
-        return
+def make_secret(seed_in: UInt64, dst: U8Ptr):
+    """Write the deterministic 32-byte wyhash secret for ``seed_in`` into ``dst``."""
     var seed = seed_in
-    var dst = U8Ptr(unsafe_from_address=dst_addr)
     var word0: UInt64 = 0
     var word1: UInt64 = 0
     var word2: UInt64 = 0
-    var i = 0
     for i in range(4):
         var accepted = False
         var chosen: UInt64 = 0
@@ -211,3 +194,8 @@ def mwh_make_secret(seed_in: UInt64, dst_addr: Int) abi("C"):
                 elif i == 2:
                     word2 = candidate
         write64(dst, i * 8, chosen)
+
+
+def hash(data: U8Ptr, n: Int, seed: UInt64, secret: U8Ptr) -> UInt64:
+    """Return the wyhash final-v3 digest for ``n`` bytes at ``data``."""
+    return wyhash_final3(data, n, seed, secret)
