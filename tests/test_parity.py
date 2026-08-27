@@ -88,6 +88,12 @@ def test_c_abi_handles_unaligned_data_and_secret_buffers():
     assert actual == upstream.hash(message, 91, generated)
 
 
+def test_c_abi_make_secret_handles_unaligned_output():
+    destination = (ctypes.c_ubyte * 33)()
+    lib().mwh_make_secret(91, ctypes.addressof(destination) + 1)
+    assert bytes(destination[1:]) == upstream.make_secret(91)
+
+
 def test_invalid_secret_is_rejected_without_native_out_of_bounds_reads():
     with pytest.raises(ValueError, match="exactly 32 bytes"):
         mojo.hash(b"x", 0, b"too short")

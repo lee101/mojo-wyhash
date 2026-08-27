@@ -74,13 +74,22 @@ upstream `wyhash` 0.1.2 Cython extension.
 
 | kernel | Mojo | upstream wyhash | speedup |
 | --- | ---: | ---: | ---: |
-| `hash` 64 B | 2.91 us | 0.75 us | 0.26x |
-| `hash` 8 MiB | 490.57 us | 651.03 us | 1.33x |
-| `make_secret` x1000 | 16.70 ms | 10.35 ms | 0.62x |
+| `hash 64 B` | 2.60 us | 0.76 us | 0.29x |
+| `hash 8 MiB` | 455.90 us | 647.46 us | 1.42x |
+| `make_secret` x1000 | 8.08 ms | 9.53 ms | 1.18x |
 
-The large-message Mojo hash is faster on this measurement, while the Cython/C
-reference remains faster for short hashes and secret generation. This project
-contains no GPU implementation.
+The large-message Mojo hash and secret generation are faster on this
+measurement. Short hashes remain dominated by Python validation and `ctypes`
+call overhead. Secret generation uses a single constant lookup table, hardware
+popcount, and unaligned 8-byte SIMD stores; its Python path writes directly into
+one freshly allocated `bytes` object without an intermediate NumPy allocation
+or copy.
+
+Hashing is dependency-chained within each call, and the public API has no batch
+operation whose items could be parallelized independently, so thread-launch
+overhead cannot be amortized. The hash also performs well below two arithmetic
+operations per byte moved. It is therefore unsuitable for GPU offload, and this
+project intentionally has no parallel or GPU path.
 
 ## How it works
 

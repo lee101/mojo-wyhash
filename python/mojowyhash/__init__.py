@@ -16,6 +16,9 @@ _UINT64_MASK = (1 << 64) - 1
 _PY_BYTES_AS_STRING = ctypes.pythonapi.PyBytes_AsString
 _PY_BYTES_AS_STRING.argtypes = [ctypes.py_object]
 _PY_BYTES_AS_STRING.restype = ctypes.c_void_p
+_PY_BYTES_FROM_STRING_AND_SIZE = ctypes.pythonapi.PyBytes_FromStringAndSize
+_PY_BYTES_FROM_STRING_AND_SIZE.argtypes = [ctypes.c_void_p, ctypes.c_ssize_t]
+_PY_BYTES_FROM_STRING_AND_SIZE.restype = ctypes.py_object
 
 
 def _buffer(value: object, name: str) -> np.ndarray:
@@ -52,16 +55,28 @@ def hash(data: object, seed: int, secret: object) -> int:
     This has the same ``(data, seed, secret)`` signature as ``wyhash.hash``.
     ``secret`` must be the 32-byte value returned by :func:`make_secret`.
     """
+    seed = _uint64(seed, "seed")
+    if isinstance(data, bytes) and isinstance(secret, bytes):
+        if len(secret) != 32:
+            raise ValueError("secret must contain exactly 32 bytes")
+        data_addr = _PY_BYTES_AS_STRING(data) if data else _EMPTY_DATA.ctypes.data
+        return int(
+            lib().mwh_hash(
+                data_addr, len(data), seed, _PY_BYTES_AS_STRING(secret)
+            )
+        )
+
     data_size, data_addr = _buffer_address(data, "data")
     secret_size, secret_addr = _buffer_address(secret, "secret")
     if secret_size != 32:
         raise ValueError("secret must contain exactly 32 bytes")
-    seed = _uint64(seed, "seed")
     return int(lib().mwh_hash(data_addr, data_size, seed, secret_addr))
 
 
 def make_secret(seed: int | float) -> bytes:
     """Make the deterministic 32-byte wyhash secret for ``seed``."""
-    secret = np.empty(32, dtype=np.uint8)
-    lib().mwh_make_secret(_uint64(seed, "seed"), secret.ctypes.data)
-    return secret.tobytes()
+    secret = _PY_BYTES_FROM_STRING_AND_SIZE(None, 32)
+    lib().mwh_make_secret(
+        _uint64(seed, "seed"), _PY_BYTES_AS_STRING(secret)
+    )
+    return secret
