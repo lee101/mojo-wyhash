@@ -27,13 +27,13 @@ name = "wyhash"
 path = "src/wyhash"
 
 [package.host-dependencies]
-mojo = "==1.1.0.dev2026081105"
+mojo = "==1.2.0.dev2026092605"
 
 [package.build-dependencies]
-mojo = "==1.1.0.dev2026081105"
+mojo = "==1.2.0.dev2026092605"
 
 [package.run-dependencies]
-mojo = "==1.1.0.dev2026081105"
+mojo = "==1.2.0.dev2026092605"
 
 [tasks]
 build = "bash build/build.sh"
@@ -46,7 +46,7 @@ mojo-test = "mojo run -I src mojo_tests/test_wyhash.mojo"
 PYTHONPATH = "python"
 
 [dependencies]
-mojo = "==1.1.0.dev2026081105"
+mojo = "==1.2.0.dev2026092605"
 python = "3.12.*"
 pytest = "*"
 numpy = "*"
