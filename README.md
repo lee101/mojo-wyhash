@@ -55,7 +55,15 @@ on first use if it is missing or stale. Set
 ## Mojo package (pixi-build)
 
 `src/wyhash/` is a Mojo package built by `pixi-build-mojo` into
-`$PREFIX/lib/mojo/wyhash.mojopkg`. Publish with:
+`$PREFIX/lib/mojo/wyhash.mojoc`. That build lives in its own environment, so
+`pixi install`, `pixi run build` and `pixi run test` never wait on a source
+build of the package itself. To exercise it:
+
+```bash
+pixi run package-pixi-build
+```
+
+Publish with:
 
 ```bash
 pixi publish --target-channel ./mojo-channel

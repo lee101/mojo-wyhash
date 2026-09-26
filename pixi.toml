@@ -41,6 +41,9 @@ test = "python -m pytest tests -q"
 bench = "flock /tmp/mojo-bench.lock python bench/bench.py"
 package = "rattler-build build --recipe conda.recipe/recipe.yaml -c https://conda.modular.com/max-nightly -c conda-forge -c https://repo.prefix.dev/modular-community"
 mojo-test = "mojo run -I src mojo_tests/test_wyhash.mojo"
+# Builds this project as a conda package with pixi-build-mojo, via the
+# self-referential path dependency in the `packaging` environment.
+package-pixi-build = "pixi install --environment packaging"
 
 [activation.env]
 PYTHONPATH = "python"
@@ -50,8 +53,15 @@ mojo = "==1.2.0.dev2026092605"
 python = "3.12.*"
 pytest = "*"
 numpy = "*"
-# Local path dep so `pixi install` exercises the pixi-build-mojo package.
-mojo-wyhash = { path = "." }
+
+# Packaging pilot: the self-referential path dependency that makes pixi build
+# this project with the pixi-build-mojo backend. It lives in its own
+# environment so a source build of the package cannot gate the default one.
+[feature.packaging]
+dependencies = { mojo-wyhash = { path = "." } }
+
+[environments]
+packaging = ["packaging"]
 
 [pypi-dependencies]
 wyhash = "==0.1.2"
