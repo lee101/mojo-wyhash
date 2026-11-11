@@ -11,11 +11,11 @@ comptime WYP1: UInt64 = 0xE7037ED1A0B428DB
 
 
 def read32(p: U8Ptr, offset: Int) -> UInt64:
-    return UInt64((p + offset).bitcast[UInt32]().load[alignment=1]())
+    return UInt64((p + offset).bitcast[UInt32]().unsafe_load[alignment=1]())
 
 
 def read64(p: U8Ptr, offset: Int) -> UInt64:
-    return (p + offset).bitcast[UInt64]().load[alignment=1]()
+    return (p + offset).bitcast[UInt64]().unsafe_load[alignment=1]()
 
 
 def wymix(a: UInt64, b: UInt64) -> UInt64:
